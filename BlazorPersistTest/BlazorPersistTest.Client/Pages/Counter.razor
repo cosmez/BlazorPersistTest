@@ -1,0 +1,51 @@
+﻿@page "/counter"
+@rendermode InteractiveWebAssembly
+@inject IRenderingMode RenderingMode
+@implements IDisposable
+@inject PersistentComponentState ApplicationState
+
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Client: @IsClient</h1>
+
+<p role="status">Current count: @CurrentCount</p>
+
+
+@code {
+    private int CurrentCount { get; set; }
+    public bool IsClient { get; set; }
+
+    private PersistingComponentStateSubscription _persistingSubscription;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsClient = RenderingMode.IsClient;
+        _persistingSubscription =
+            ApplicationState.RegisterOnPersisting(PersistData);
+
+        if (ApplicationState.TryTakeFromJson<int>("Counter", out var counterData))
+        {
+            CurrentCount = counterData;
+        }
+        else
+        {
+            CurrentCount = RenderingMode.Counter;
+        }
+    }
+
+    private Task PersistData()
+    {
+        
+        ApplicationState.PersistAsJson("Counter", CurrentCount);
+         
+
+        return Task.CompletedTask;
+    }
+     
+    public void Dispose()
+    {
+        _persistingSubscription.Dispose();
+    }
+
+}
